@@ -13,18 +13,18 @@ data = arch.data.sp500.load()
 market = data["Adj Close"]
 print("symbol = sp500")
 print("\nfirst and last dates:\n" + market.iloc[[0, -1]].to_string())
-returns = 100 * market.pct_change().dropna()
+xret = 100 * market.pct_change().dropna()
 print("\nreturn stats:\n#obs", "".join("%11s"%label for label in
     ["mean", "sd", "skew", "kurt", "min", "max"]))
-print("%5d"%len(returns), *("%10.4f"%stat for stat in [np.mean(returns),
-    np.std(returns), skew(returns), kurtosis(returns),
-    np.min(returns), np.max(returns)]), end="\n\n")
+print("%5d"%len(xret), *("%10.4f"%stat for stat in [np.mean(xret),
+    np.std(xret), skew(xret), kurtosis(xret),
+    np.min(xret), np.max(xret)]), end="\n\n")
 if fit_garch:
-    am = arch_model(returns)
+    am = arch_model(xret)
     res = am.fit(update_freq=0, disp="off")
     print(res.summary(), end="\n\n")
 if fit_gjr_garch:
-    am = arch_model(returns, p=1, o=1, q=1)
+    am = arch_model(xret, p=1, o=1, q=1)
     res = am.fit(update_freq=0, disp="off")
     print(res.summary())
     if plot_gjr_garch:
