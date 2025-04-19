@@ -22,6 +22,7 @@ plot_norm_dist = True      # draw KDE + mixture + N(0,1) densities
 fit_garch      = False
 fit_gjr_garch  = True      # fit the GJR‑GARCH(1,1,1)
 max_lag        = 30        # lags for the ACF table (0 -> skip ACFs)
+dist           = "skewt"
 # -----------------------------------
 
 # ---------- Load data ----------
@@ -87,14 +88,14 @@ def process_std_ret(std_series):
 
 # ----- GARCH(1,1) -----
 if fit_garch:
-    res = arch_model(xret).fit(update_freq=0, disp="off")
+    res = arch_model(xret, dist=dist).fit(update_freq=0, disp="off")
     print(res.summary(), end="\n\n")
     cond_vol = res.conditional_volatility.dropna()
     process_std_ret(xret.loc[cond_vol.index] / cond_vol)
 
-# ----- GJR‑GARCH(1,1,1) -----
+# ----- GJR-GARCH(1,1,1) -----
 if fit_gjr_garch:
-    res = arch_model(xret, p=1, o=1, q=1).fit(update_freq=0, disp="off")
+    res = arch_model(xret, p=1, o=1, q=1, dist=dist).fit(update_freq=0, disp="off")
     print(res.summary())
     cond_vol = res.conditional_volatility.dropna()
     process_std_ret(xret.loc[cond_vol.index] / cond_vol)
