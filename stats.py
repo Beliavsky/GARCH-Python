@@ -1,6 +1,7 @@
 """Generic helpers for simple time-series diagnostics and plotting."""
 from __future__ import annotations
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde, norm, skew, kurtosis
 
@@ -16,7 +17,6 @@ def acf(series: np.ndarray, k: int) -> float:
     if k <= 0 or k >= series.size:
         raise ValueError("k must be in {1, …, len(series)‑1}")
     return np.corrcoef(series[k:], series[:-k])[0, 1]
-
 
 def print_acf_table(acf_raw: list[float], acf_std: list[float], lags):
     """ print autocorrelations stored in acf_raw and acf_std """
@@ -126,3 +126,48 @@ def plot_norm_kde(series, gmm=None, title=
 
     fig.tight_layout()
     plt.show()
+
+def vol_bin_stats(returns: pd.Series, cond_vol: pd.Series,
+    vol_bin_width: float, max_vol_threshold: float,
+    days_year: float = 252.0) -> pd.DataFrame:
+    """Compute return-stats in bins of conditional volatility."""
+    # align returns and volatility
+    df_vol = pd.DataFrame({
+        "ret": returns,
+        "vol": cond_vol
+    })
+
+    # create bin edges: [0, w, 2w, ..., max] and one final +inf bin
+    edges = np.arange(0, max_vol_threshold + vol_bin_width, vol_bin_width)
+    edges = list(edges) + [np.inf]
+
+    # labels for each bin except the last
+    labels = [
+        f"{edges[i]:.1f}-{edges[i+1]:.1f}"
+        for i in range(len(edges) - 2)
+    ] + [f">={max_vol_threshold:.1f}"]
+
+    df_vol["vol_bin"] = pd.cut(
+        df_vol["vol"],
+        bins=edges,
+        labels=labels,
+        right=False
+    )
+
+    # aggregate stats per bin
+    stats_list: list[dict] = []
+    for bin_label, grp in df_vol.groupby("vol_bin"):
+        r = grp["ret"].to_numpy()
+        n, m, s, sharpe, sk, kt, mn, mx = return_stats(r, days_year)
+        stats_list.append({
+            "vol_bin": str(bin_label),
+            "#obs": n,
+            "mean": m,
+            "sd": s,
+            "Sharpe": sharpe,
+            "skew": sk,
+            "kurt": kt,
+            "min": mn,
+            "max": mx
+        })
+    return pd.DataFrame(stats_list)
