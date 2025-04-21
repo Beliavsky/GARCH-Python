@@ -1,5 +1,5 @@
 # GARCH-Python
-GARCH estimation using the arch package
+GARCH estimation using the [arch](https://github.com/bashtage/arch) package
 
 `python xgarch_gjr_mean.py` gives
 ```
