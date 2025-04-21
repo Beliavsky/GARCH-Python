@@ -10,7 +10,7 @@ from scipy.stats import skew, kurtosis
 from arch import arch_model
 import matplotlib.pyplot as plt
 
-from stats import acf, print_acf_table, stats_table, plot_norm_kde
+from stats import acf, print_acf_table, print_stats_table, plot_norm_kde
 
 try:
     from sklearn.mixture import GaussianMixture
@@ -161,7 +161,7 @@ if fit_aparch:
     run_model("APARCH(1,1,1)", vol="APARCH", p=1, o=1, q=1, power=1.0)
 
 # ---------- final stats print ----------
-stats_table(raw_stats_row, norm_stats_row)
+print_stats_table(raw_stats_row, norm_stats_row)
 
 if plot_norm_dist and std_ret_series is not None:
     plot_norm_kde(std_ret_series, log_ratio=True)
