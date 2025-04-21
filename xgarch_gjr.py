@@ -1,5 +1,5 @@
-"""Load S&P 500 data, fit GARCH / GJR‑GARCH, compare ACFs of squared
-returns and normalised returns, fit a 2‑component normal mixture, and
+"""Load S&P 500 data, fit GARCH / GJR-GARCH, compare ACFs of squared
+returns and normalised returns, fit a 2-component normal mixture, and
 (optionally) plot KDE + mixture + N(0,1) densities."""
 from __future__ import annotations
 import numpy as np
@@ -8,7 +8,7 @@ from scipy.stats import skew, kurtosis
 from arch import arch_model
 import matplotlib.pyplot as plt
 
-from stats import acf, print_acf_table, stats_table, plot_norm_kde
+from stats import acf, print_acf_table, print_stats_table, plot_norm_kde
 
 try:
     from sklearn.mixture import GaussianMixture
@@ -17,10 +17,10 @@ except ImportError:
     SKLEARN_OK = False
 
 # -------- User‑set toggles ---------
-plot_gjr_garch = False     # plot fitted GJR‑GARCH volatility, etc.
+plot_gjr_garch = False     # plot fitted GJR-GARCH volatility, etc.
 plot_norm_dist = True      # draw KDE + mixture + N(0,1) densities
 fit_garch      = False
-fit_gjr_garch  = True      # fit the GJR‑GARCH(1,1,1)
+fit_gjr_garch  = True      # fit the GJR-GARCH(1,1,1)
 max_lag        = 30        # lags for the ACF table (0 -> skip ACFs)
 dist           = "skewt"
 # -----------------------------------
@@ -84,7 +84,7 @@ def process_std_ret(std_series):
         for i in range(2):
             print(f"{i+1:3d} {w[i]:10.4f} {mu[i]:10.4f} {sig[i]:10.4f}")
     elif mix_model is None:
-        print("\nscikit‑learn not available -> mixture fit skipped")
+        print("\nscikit-learn not available -> mixture fit skipped")
 
 # ----- GARCH(1,1) -----
 if fit_garch:
@@ -105,7 +105,7 @@ if fit_gjr_garch:
         plt.show()
 
 # ---------- final output ----------
-stats_table(raw_stats_row, norm_stats_row)
+print_stats_table(raw_stats_row, norm_stats_row)
 
 if plot_norm_dist and std_ret_series is not None:
     plot_norm_kde(std_ret_series, gmm=mix_model, log_ratio=True)
