@@ -156,7 +156,7 @@ def vol_bin_stats(returns: pd.Series, cond_vol: pd.Series,
 
     # aggregate stats per bin
     stats_list: list[dict] = []
-    for bin_label, grp in df_vol.groupby("vol_bin"):
+    for bin_label, grp in df_vol.groupby("vol_bin", observed=False):
         r = grp["ret"].to_numpy()
         n, m, s, sharpe, sk, kt, mn, mx = return_stats(r, days_year)
         stats_list.append({
