@@ -9,7 +9,7 @@ import arch.data.sp500
 from scipy.stats import skew, kurtosis
 from arch import arch_model
 import matplotlib.pyplot as plt
-
+from pandas_util import read_csv_date_index
 from stats import (acf, print_acf_table, print_stats_table, plot_norm_kde,
     return_stats)
 
@@ -25,11 +25,16 @@ rf_rate             = 0.03
 days_year           = 252.0
 bin_width           = 1.0
 max_vol_threshold   = 2.0
+prices_file = "spy_tlt.csv"
 # -----------------------------------
 
 # ---------- Load data ----------
-data   = arch.data.sp500.load()
-market = data["Adj Close"]
+if prices_file is not None:
+    market = read_csv_date_index(prices_file)["SPY"]
+else:
+    data   = arch.data.sp500.load()
+    market = data["Adj Close"]
+    
 print("symbol = sp500")
 print("\nfirst and last dates:\n" + market.iloc[[0, -1]].to_string())
 
@@ -107,7 +112,7 @@ if bin_width is not None:
         stats_list.append({
             "vol_bin":  str(bin_label),
             **dict(zip(
-                ["n_obs", "mean", "sd", "Sharpe", "skew", "kurt", "min", "max"],
+                ["#obs", "mean", "sd", "Sharpe", "skew", "kurt", "min", "max"],
                 return_stats(r.to_numpy(), days_year)
             ))
         })
