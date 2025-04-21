@@ -92,14 +92,9 @@ print_stats_table(raw_stats_row, norm_stats_row)
 if plot_norm_dist and std_ret_series is not None:
     plot_norm_kde(std_ret_series, log_ratio=True)
 
-# ---------- volatility‐bin statistics via helper ----------
+# ---------- volatility‐bin statistics ----------
 if vol_bin_width is not None and cond_vol is not None:
-    df_vol_stats = vol_bin_stats(
-        xret.loc[cond_vol.index],
-        cond_vol,
-        vol_bin_width,
-        max_vol_threshold,
-        days_year
-    )
-    print("\nVolatility-bin statistics:")
-    print(df_vol_stats.to_string(index=False))
+    df_vol_stats = vol_bin_stats(xret.loc[cond_vol.index], cond_vol,
+        vol_bin_width, max_vol_threshold, days_year)
+    print("Volatility-bin statistics:\n" + df_vol_stats.to_string(
+        index=False))
