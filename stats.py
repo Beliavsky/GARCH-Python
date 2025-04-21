@@ -1,8 +1,8 @@
-"""Generic helpers for simple time‑series diagnostics and plotting."""
+"""Generic helpers for simple time-series diagnostics and plotting."""
 from __future__ import annotations
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import gaussian_kde, norm
+from scipy.stats import gaussian_kde, norm, skew, kurtosis
 
 # --- optional skew-t import ------------------------------------------
 try:
@@ -10,33 +10,40 @@ try:
     SKEWT_OK = True
 except ImportError:
     SKEWT_OK = False
-# ---------------------------------------------------------------------
 
-
-# ------------------------------------------------------------------
-# 1.  Basic (unbiased) lag-k autocorrelation
-# ------------------------------------------------------------------
 def acf(series: np.ndarray, k: int) -> float:
+    """  lag-k autocorrelation """
     if k <= 0 or k >= series.size:
         raise ValueError("k must be in {1, …, len(series)‑1}")
     return np.corrcoef(series[k:], series[:-k])[0, 1]
 
 
-# ------------------------------------------------------------------
-# 2.  Convenience printer for two ACF sequences
-# ------------------------------------------------------------------
 def print_acf_table(acf_raw: list[float], acf_std: list[float], lags):
+    """ print autocorrelations stored in acf_raw and acf_std """
     print("Lag    ACF(ret^2) ACF(norm_ret^2)")
     for k in lags:
         print(f"{k:3d}    {acf_raw[k-1]:10.4f}     {acf_std[k-1]:10.4f}")
     print()
 
+def return_stats(series: np.ndarray,
+    days_year: float = 252.0) -> tuple[int, float, float,
+    float, float, float, float, float]:
+    """ Compute return-series statistics: (nobs, mean, sd,
+    annualized Sharpe, skew, kurtosis, min, max) """
+    n      = series.size
+    m      = series.mean()
+    s      = series.std(ddof=0)
+    sharpe = np.sqrt(days_year) * m / s if s != 0 else np.nan
+    sk     = skew(series)
+    kt     = kurtosis(series)
+    mn     = series.min()
+    mx     = series.max()
+    return (n, m, s, sharpe, sk, kt, mn, mx)
 
-# ------------------------------------------------------------------
-# 3.  Summary‑statistics table
-# ------------------------------------------------------------------
-def stats_table(row_raw: tuple, row_norm: tuple | None = None):
-    labels = ["mean", "sd", "skew", "kurt", "min", "max"]
+def print_stats_table(row_raw: tuple,
+    row_norm: tuple | None = None):
+    """ print summary stats stored in row_raw and row_norm """
+    labels = ["mean", "sd", "Sharpe", "skew", "kurt", "min", "max"]
     header = "series  #obs  " + " ".join(f"{lab:>10}" for lab in labels)
     print("\nreturn statistics")
     print(header)
@@ -45,21 +52,11 @@ def stats_table(row_raw: tuple, row_norm: tuple | None = None):
         print(f"norm   {row_norm[0]:5d} ", *[f"{v:10.4f}" for v in row_norm[1:]])
     print()
 
-
-# ------------------------------------------------------------------
-# 4.  Density plot: KDE, mixture, standard normal, skew-t
-# ------------------------------------------------------------------
-def plot_norm_kde(
-    series,
-    gmm=None,
-    title="Densities of normalised returns",
-    log_ratio=False,
-    eps=1e-12,
-):
-    """
-    Plot KDE of the data, a fitted 2‑component mixture (if given),
-    a standard‑normal PDF, and (when available) a fitted skew‑t PDF.
-    With log_ratio=True a second panel shows log‑ratios versus KDE.
+def plot_norm_kde(series, gmm=None, title=
+    "Densities of normalised returns", log_ratio=False, eps=1e-12):
+    """ Plot KDE of the data, a fitted 2-component mixture (if given),
+    a standard-normal PDF, and (when available) a fitted skew‑t PDF.
+    With log_ratio=True a second panel shows log-ratios versus KDE.
     """
     kde = gaussian_kde(series)
     x   = np.linspace(-5, 5, 601)
