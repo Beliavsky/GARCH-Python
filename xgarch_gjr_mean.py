@@ -11,7 +11,7 @@ from arch import arch_model
 import matplotlib.pyplot as plt
 from pandas_util import read_csv_date_index
 from stats import (acf, print_acf_table, print_stats_table, plot_norm_kde,
-    return_stats)
+    return_stats, vol_bin_stats)
 
 # -------- User-set toggles ---------
 pd.set_option('display.float_format', '{:.4f}'.format)
@@ -23,9 +23,9 @@ max_lag             = 0
 dist                = "skewt"
 rf_rate             = 0.03
 days_year           = 252.0
-bin_width           = 1.0
+vol_bin_width       = 1.0
 max_vol_threshold   = 2.0
-prices_file = "spy_tlt.csv"
+prices_file         = "spy_tlt.csv"
 # -----------------------------------
 
 # ---------- Load data ----------
@@ -34,7 +34,7 @@ if prices_file is not None:
 else:
     data   = arch.data.sp500.load()
     market = data["Adj Close"]
-    
+
 print("symbol = sp500")
 print("\nfirst and last dates:\n" + market.iloc[[0, -1]].to_string())
 
@@ -66,6 +66,8 @@ def process_std_ret(std_series: pd.Series):
         )
         acf_done = True
 
+cond_vol = None
+
 # ----- GARCH(1,1) -----
 if fit_garch:
     res = arch_model(xret, dist=dist).fit(update_freq=0, disp="off")
@@ -90,33 +92,14 @@ print_stats_table(raw_stats_row, norm_stats_row)
 if plot_norm_dist and std_ret_series is not None:
     plot_norm_kde(std_ret_series, log_ratio=True)
 
-if bin_width is not None:
-    df_vol = pd.DataFrame({
-        "ret": xret.loc[cond_vol.index],
-        "vol": cond_vol
-    })
-    edges = np.arange(0, max_vol_threshold + bin_width, bin_width)
-    edges = list(edges) + [np.inf]
-    labels = [
-        f"{edges[i]:.1f}-{edges[i+1]:.1f}"
-        for i in range(len(edges)-2)
-    ] + [f">={max_vol_threshold:.1f}"]
-
-    df_vol["vol_bin"] = pd.cut(
-        df_vol["vol"], bins=edges, labels=labels, right=False
+# ---------- volatility‐bin statistics via helper ----------
+if vol_bin_width is not None and cond_vol is not None:
+    df_vol_stats = vol_bin_stats(
+        xret.loc[cond_vol.index],
+        cond_vol,
+        vol_bin_width,
+        max_vol_threshold,
+        days_year
     )
-
-    stats_list = []
-    for bin_label, grp in df_vol.groupby("vol_bin"):
-        r = grp["ret"]
-        stats_list.append({
-            "vol_bin":  str(bin_label),
-            **dict(zip(
-                ["#obs", "mean", "sd", "Sharpe", "skew", "kurt", "min", "max"],
-                return_stats(r.to_numpy(), days_year)
-            ))
-        })
-
-    df_vol_stats = pd.DataFrame(stats_list)
     print("\nVolatility-bin statistics:")
     print(df_vol_stats.to_string(index=False))
