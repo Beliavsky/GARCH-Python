@@ -25,7 +25,7 @@ rf_rate             = 0.03
 days_year           = 252.0
 vol_bin_width       = 1.0
 max_vol_threshold   = 2.0
-prices_file         = "spy_tlt.csv"
+prices_file         = "spy.csv"
 # -----------------------------------
 
 # ---------- Load data ----------
